@@ -46,19 +46,39 @@
     watch: {
     },
     methods: {
+      /**
+       * 绘制多边形的顶点，为一个小圆形
+       * @param {*} point
+       * @param {*} color 
+       */
+      drawVertex(point, color){
+          this.ctx.beginPath();
+          this.ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
+          this.ctx.strokeStyle = color;
+          this.ctx.fillStyle = color; //填充颜色
+          // this.ctx.closePath();
+          this.ctx.fill();
+          this.ctx.stroke(); //绘制
+
+      },
       drawArea(area){
         let pointArr = area.points;
         this.ctx.beginPath();
         if (pointArr.length > 1) {
           this.ctx.moveTo(pointArr[0].x, pointArr[0].y);
-          for (var i = 1; i < pointArr.length; i++) {
+          for (let i = 1; i < pointArr.length; i++) {
             this.ctx.lineTo(pointArr[i].x, pointArr[i].y);
-            this.ctx.strokeStyle = area.color;
-            this.ctx.fillStyle = "rgba(161,195,255,1)"; //填充颜色
           }
+          this.ctx.strokeStyle = area.color;
+          this.ctx.fillStyle = "rgba(161,195,255,1)"; //填充颜色
           this.ctx.closePath();
           this.ctx.fill();
           this.ctx.stroke(); //绘制
+
+          this.drawVertex(pointArr[0], area.color)
+          for (let i = 1; i < pointArr.length; i++) {
+            this.drawVertex(pointArr[i], area.color)
+          }
         }
       },
       refresh(){
