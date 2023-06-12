@@ -12,7 +12,7 @@
             object-fit: fill;
           "
         />
-        <canvas ref="canvas"
+        <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
           @click="handleCanvasSaveClick"
           @mousemove="handleCanvasSaveMove"
           @mouseup="handleCanvasMouseUp"
@@ -37,72 +37,32 @@
   </template>
    
   <script>
-  //判断两个线段是否相交
-  function isIntersection(a, b, c, d) {
-    /** 1 解线性方程组, 求线段交点. **/
-    // 如果分母为0 则平行或共线, 不相交
-    var denominator = (b.y - a.y) * (d.x - c.x) - (a.x - b.x) * (c.y - d.y);
-    if (denominator == 0) {
-      return false;
+  import {isExistIntersection, checkPP} from '../lib/DrawAlgorithm'
+
+  // 迭代递归法：深拷贝对象与数组
+  function deepClone(obj) {
+    // 判断是否为对象
+    function isObject(o) {
+      return (typeof o === 'object' || typeof o === 'function') && o !== null
     }
 
-    // 线段所在直线的交点坐标 (x , y)
-    var x =
-      ((b.x - a.x) * (d.x - c.x) * (c.y - a.y) +
-        (b.y - a.y) * (d.x - c.x) * a.x -
-        (d.y - c.y) * (b.x - a.x) * c.x) /
-      denominator;
-    var y =
-      -(
-        (b.y - a.y) * (d.y - c.y) * (c.x - a.x) +
-        (b.x - a.x) * (d.y - c.y) * a.y -
-        (d.x - c.x) * (b.y - a.y) * c.y
-      ) / denominator;
-
-    /** 2 判断交点是否在两条线段上 **/
-    if (
-      // 交点在线段1上
-      (x - a.x) * (x - b.x) < 0 &&
-      (y - a.y) * (y - b.y) < 0 &&
-      // 且交点也在线段2上
-      (x - c.x) * (x - d.x) < 0 &&
-      (y - c.y) * (y - d.y) < 0
-    ) {
-      // // 返回交点p
-      // return {
-      //   x: x,
-      //   y: y,
-      // };
-      return true;
+    if (!isObject(obj)) {
+      throw new Error('obj 不是一个对象！')
     }
-    //否则不相交
-    return false;
-  }
 
-  function isExistIntersection(points) {
-    let result = false;
-    for (let i = 0; i < points.length - 1; i++) {
-      let a = points[i];
-      let b = points[i + 1];
-      for (let j = 0; j < points.length - 1; j++) {
-        if (i == j) {
-          continue;
-        }
-        let c = points[j];
-        let d = points[j + 1];
-        result = isIntersection(a, b, c, d);
-        if (result) {
-          return result;
-        }
-        // console.log(result)
-      }
+    let isArray = Array.isArray(obj)
+    let cloneObj = isArray ? [] : {}
+    for (let key in obj) {
+      cloneObj[key] = isObject(obj[key]) ? deepClone(obj[key]) : obj[key]
     }
-    return result;
+
+    return cloneObj
   }
 
     // import FlvCop from "@/viewsCommon/components/FlvCop.vue";
   export default {
     name: "PolygonDraw",
+    emits:['created', 'createFailed', 'changed'],
     data() {
       return {
         // ctxSave: "",
@@ -116,6 +76,10 @@
         color: 'black', //新建的area的color
         points: [], //新建的area的点
         lastPoint: {}, //新建的area的最后一个点
+
+        shiftArea: null,
+        shiftBeginMousePoint: null, //移动多边形时起始点击的点
+        shiftBeginPoints: null, //移动多边形时，多边形原始的点
 
         alertType: null,
         alertMsg: '',
@@ -242,22 +206,32 @@
         }
         this.mode = ''
         if (this.points.length < 3) { //多边形顶点不能小于3个
-          this.showError('多边形顶点不能小于3个')          
+          let msg = '多边形顶点不能小于3个'
+          this.$emit('createFailed', false, msg);
+          this.showError(msg)
         }else if (isExistIntersection(this.points)) {
-          this.showError("存在交叉线段，请重新绘制");
+          let msg = "存在交叉线段，请重新绘制"
+          this.$emit('createFailed', false, msg);
+          this.showError(msg)
         }else{
-          this.areas.push({ //加入到areas
+          let area = { //加入到areas
             title: this.title,
             color: this.color,
             points: this.points
-          })
+          }
+          this.areas.push(area)
+          this.$emit('created', area);
         }
 
         this.title = ''
         this.points = []
       },
-        handleCanvasMouseUp() {
-       
+      handleCanvasMouseUp() {
+        if(this.mode === 'shift'){
+          this.mode = ''
+          this.shiftArea = null
+          this.shiftBeginMousePoint = null
+        }
       },
       handleCanvasMouseDown(e) {
         console.log("Mouse down: " + e.buttons)
@@ -271,6 +245,22 @@
             this.createFinish()
           }
           this.refresh()
+        }
+
+        if(this.mode === ''){
+          let p = {
+            x: e.offsetX,
+            y: e.offsetY
+          }
+          for (let i = 0; i < this.areas.length; i++) {
+            if (checkPP(p, this.areas[i].points)) {
+              this.mode = 'shift'
+              this.shiftArea = this.areas[i]
+              this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
+              this.shiftBeginMousePoint = p
+              break;
+            }
+          }
         }
       },
       // handleDbClick(){
@@ -291,6 +281,17 @@
             y: e.offsetY
           }
           
+          this.refresh()
+        }else if(this.mode === 'shift'){ //正在平移
+          let shiftX = e.offsetX - this.shiftBeginMousePoint.x
+          let shiftY = e.offsetY - this.shiftBeginMousePoint.y
+          for(let i = 0; i < this.shiftBeginPoints.length; i++){
+            this.shiftArea.points[i].x = this.shiftBeginPoints[i].x + shiftX
+            this.shiftArea.points[i].y = this.shiftBeginPoints[i].y + shiftY
+          }
+          console.log('shiftX:', shiftX, ', shiftY:', shiftY)
+          console.log('shiftBeginPoints[0]:', this.shiftBeginPoints[0].x, ', ', this.shiftBeginPoints[0].y)
+
           this.refresh()
         }
       },
@@ -350,5 +351,13 @@ canvas {
    width: 100%;
    height: 100%;
  }
+ .shift-cursor{
+  cursor: move;
+ }
+
+ .normal-cursor{
+  cursor: default;
+ }
+
   </style>
   
