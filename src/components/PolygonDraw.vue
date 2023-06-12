@@ -12,7 +12,14 @@
             object-fit: fill;
           "
         />
-        <canvas ref="canvas"></canvas>
+        <canvas ref="canvas"
+          @click="handleCanvasSaveClick"
+          @mousemove="handleCanvasSaveMove"
+          @mouseup="handleCanvasMouseUp"
+          @mousedown="handleCanvasMouseDown"
+          @contextmenu="handleContextMenu"
+        ></canvas> <!-- @dblclick="handleDbClick" -->
+        
         <!--存储已生成的点线，避免被清空-->
         <!-- <canvas
           ref="canvasSave"
@@ -35,7 +42,13 @@
         // canSave: "",
         ctx: "",
         can: "",
+        mode: "",  //工作模式，'create'：在新绘制多边形；'shift':平移多边形；'change'：更改某个多边形的顶点
         debug: false,
+
+        title: '',  //新建的area的title
+        color: 'black', //新建的area的color
+        points: [], //新建的area的点
+        lastPoint: {}, //新建的area的最后一个点
       };
     },
     mounted(){
@@ -43,6 +56,22 @@
       this.refresh()
     },
     props: ['areas'],
+    /*
+    areas = [
+      {
+        title: 'test1',
+        color: 'red',
+        points:[
+          {x: 10, y: 20},
+          {x: 100, y: 200},
+          {x: 150, y: 210},
+          {x: 110, y: 120},
+          {x: 70, y: 50},
+        ]
+      },
+      ...
+    ]
+     */
     watch: {
     },
     methods: {
@@ -51,40 +80,56 @@
        * @param {*} point
        * @param {*} color 
        */
-      drawVertex(point, color){
-          this.ctx.beginPath();
-          this.ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
-          this.ctx.strokeStyle = color;
-          this.ctx.fillStyle = color; //填充颜色
-          // this.ctx.closePath();
-          this.ctx.fill();
-          this.ctx.stroke(); //绘制
+      drawVertex(ctx, point, color){
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color; //填充颜色
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke(); //绘制
 
       },
-      drawArea(area){
+      drawArea(ctx, area){
         let pointArr = area.points;
-        this.ctx.beginPath();
         if (pointArr.length > 1) {
-          this.ctx.moveTo(pointArr[0].x, pointArr[0].y);
+          ctx.beginPath();
+          ctx.moveTo(pointArr[0].x, pointArr[0].y);
           for (let i = 1; i < pointArr.length; i++) {
-            this.ctx.lineTo(pointArr[i].x, pointArr[i].y);
+            ctx.lineTo(pointArr[i].x, pointArr[i].y);
           }
-          this.ctx.strokeStyle = area.color;
-          this.ctx.fillStyle = "rgba(161,195,255,1)"; //填充颜色
-          this.ctx.closePath();
-          this.ctx.fill();
-          this.ctx.stroke(); //绘制
+          ctx.strokeStyle = area.color;
+          ctx.fillStyle = "rgba(161,195,255,0.5)"; //填充颜色
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke(); //绘制
 
-          this.drawVertex(pointArr[0], area.color)
+          this.drawVertex(ctx, pointArr[0], area.color)
           for (let i = 1; i < pointArr.length; i++) {
-            this.drawVertex(pointArr[i], area.color)
+            this.drawVertex(ctx, pointArr[i], area.color)
           }
         }
       },
+      clearCanvas(canvas){ //重新设置canvas高宽，已达到清除canvas的目的
+        var w = canvas.width;
+        var h = canvas.height;
+        canvas.width = w;
+        canvas.height = h;
+        },
       refresh(){
-        this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
+        // this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
+        this.clearCanvas(this.can)
         for(let area of this.areas){
-          this.drawArea(area)
+          this.drawArea(this.ctx, area)
+        }
+        if(this.points.length > 0){
+          let points = [].concat(this.points)
+          points.push(this.lastPoint)
+          this.drawArea(this.ctx, {
+            title: this.title,
+            color: this.color,
+            points: points
+          })
         }
       },
       initCanvas() {
@@ -110,24 +155,70 @@
         // console.log(can);
         // console.log(canSave);
       },
+      create(title, color){
+        this.title = title
+        this.color = color
+        this.mode = 'create'
+      },
+      createFinish(){
+        if(this.mode !== 'create'){
+          return
+        }
+        this.mode = ''
+        if(this.points.length < 3){ //多边形顶点不能小于3个
+          console.log('多边形顶点不能小于3个')
+          return
+        }
+        this.areas.push({ //加入到areas
+          title: this.title,
+          color: this.color,
+          points: this.points
+        })
+        this.title = ''
+        this.points = []
+      },
       handleCanvasMouseUp() {
        
       },
       handleCanvasMouseDown(e) {
-        if(this.debug){
-          console.log(e)
+        console.log("Mouse down: " + e.buttons)
+        if(this.mode === 'create'){
+          let newPoint = {
+            x: e.offsetX,
+            y: e.offsetY
+          }
+          this.points.push(newPoint)
+          if(e.buttons == 2){ //右键结束
+            this.createFinish()
+          }
+          this.refresh()
         }
       },
+      // handleDbClick(){
+      //   if(this.mode === 'create'){ //双击结束
+      //     this.createFinish()
+      //     this.refresh()
+      //   }
+      // },
       handleCanvasSaveClick(e) {
         if(this.debug){
           console.log(e)
         }
       },
       handleCanvasSaveMove(e) {
-        if(this.debug){
-          console.log(e)
+        if(this.mode === 'create'){
+          this.lastPoint = {
+            x: e.offsetX,
+            y: e.offsetY
+          }
+          
+          this.refresh()
         }
       },
+      handleContextMenu(e){
+        e.preventDefault();
+        return false;
+      }
     }
   };
   </script>
