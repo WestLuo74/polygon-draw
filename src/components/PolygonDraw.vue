@@ -285,12 +285,26 @@
         }else if(this.mode === 'shift'){ //正在平移
           let shiftX = e.offsetX - this.shiftBeginMousePoint.x
           let shiftY = e.offsetY - this.shiftBeginMousePoint.y
+
+          // 多边形不可出画板
+          for (let i = 0; i < this.shiftBeginPoints.length; i++) {
+            if (
+              this.shiftBeginPoints[i].x + shiftX >= this.can.width ||
+              this.shiftBeginPoints[i].x + shiftX <= 0 ||
+              this.shiftBeginPoints[i].y + shiftY >= this.can.height ||
+              this.shiftBeginPoints[i].y + shiftY <= 0
+            ) {
+              e.preventDefault();
+              return
+            }
+          }
+
           for(let i = 0; i < this.shiftBeginPoints.length; i++){
             this.shiftArea.points[i].x = this.shiftBeginPoints[i].x + shiftX
             this.shiftArea.points[i].y = this.shiftBeginPoints[i].y + shiftY
           }
-          console.log('shiftX:', shiftX, ', shiftY:', shiftY)
-          console.log('shiftBeginPoints[0]:', this.shiftBeginPoints[0].x, ', ', this.shiftBeginPoints[0].y)
+          // console.log('shiftX:', shiftX, ', shiftY:', shiftY)
+          // console.log('shiftBeginPoints[0]:', this.shiftBeginPoints[0].x, ', ', this.shiftBeginPoints[0].y)
 
           this.refresh()
         }
