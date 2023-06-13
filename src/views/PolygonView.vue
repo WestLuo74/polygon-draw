@@ -6,8 +6,8 @@
         style="height: 600px; width: 100%"
       />
       <div class="dialog-footer" style="margin-top: 10px">        
-        <el-button plain @click="DrawArea()">绘制区域</el-button>
-        <el-button plain @click="DrawArea(true)">取消</el-button>
+        <el-button plain @click="drawArea()">绘制区域</el-button>
+        <el-button plain @click="cancelDraw()">取消绘制</el-button>
         <el-button plain @click="resetForm">重 置</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </div>
@@ -57,9 +57,12 @@
     },
    
     methods: {
-      DrawArea() {
+      drawArea() {
         // console.log(e)
         this.$refs.polygonDrawRef.create()
+      },
+      cancelDraw(){
+        this.$refs.polygonDrawRef.createCancel()
       },
       // 重置
       resetForm() {

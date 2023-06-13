@@ -231,6 +231,19 @@
         this.title = title
         this.color = color
         this.mode = 'create'
+        if(this.selectedArea){
+          this.selectedArea = null
+          this.refresh()
+        }
+      },
+      createCancel(){
+        if (this.mode !== 'create') {
+          return
+        }
+        this.mode = ''
+        this.title = ''
+        this.points = []
+        this.refresh()
       },
       createFinish() {
         if (this.mode !== 'create') {
@@ -292,7 +305,7 @@
         }
       },
       handleCanvasMouseDown(e) {
-        console.log("Mouse down: " + e.buttons)
+        // console.log("Mouse down: " + e.buttons)
         if(this.mode === 'create'){
           let newPoint = {
             x: e.offsetX,
@@ -303,6 +316,7 @@
             this.createFinish()
           }
           this.refresh()
+          return
         }
 
         if(this.mode === ''){
@@ -339,10 +353,9 @@
             if(got){
               this.selectedArea = this.areas[i]
               this.refresh()
-              break
+              return
             }
           }
-          
         }
 
         if(this.mode === ''){
