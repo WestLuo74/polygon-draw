@@ -37,7 +37,7 @@
   </template>
    
   <script>
-  import {isExistIntersection, checkPP, pointInCircle} from '../lib/DrawAlgorithm'
+  import {isExistIntersection, checkPP, pointInCircle, centerPoint} from '../lib/DrawAlgorithm'
 
   // 迭代递归法：深拷贝对象与数组
   function deepClone(obj) {
@@ -118,6 +118,21 @@
     watch: {
     },
     methods: {
+      drawTitle(ctx, index, area){
+        this.ctx.font = "20px 宋体";
+        // this.ctx.fillStyle = "rgb(255,165,0)";
+        this.ctx.fillStyle = area.color
+        let heavyHeart = centerPoint(area.points);
+        // y向下为正
+        ctx.fillText(
+          '' + index + '.' + area.title,
+          heavyHeart.x - 40,
+          heavyHeart.y
+          // 随便找两个不相邻的点的中点好了
+          // (area.fenceDetailDTOS[0].x + area.fenceDetailDTOS[2].x) / 2,
+          // (area.fenceDetailDTOS[0].y + area.fenceDetailDTOS[2].y) / 2
+        );
+      },
       /**
        * 绘制多边形的顶点，为一个小圆形
        * @param {*} point
@@ -133,7 +148,7 @@
           ctx.stroke(); //绘制
 
       },
-      drawArea(ctx, area){
+      drawArea(ctx, index, area){
         let pointArr = area.points;
         if (pointArr.length > 1) {
           ctx.beginPath();
@@ -152,6 +167,7 @@
             this.drawVertex(ctx, pointArr[i], area.color)
           }
         }
+        this.drawTitle(ctx, index, area)
       },
       clearCanvas(canvas){ //重新设置canvas高宽，已达到清除canvas的目的
         var w = canvas.width;
@@ -163,15 +179,15 @@
         // this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
         this.clearCanvas(this.can)
         
-        for(let area of this.areas){
-          this.drawArea(this.ctx, area)
+        for(let i = 0; i< this.areas.length; i++){
+          this.drawArea(this.ctx, i + 1, this.areas[i])
         }
 
         if (this.mode === 'create'){
           if(this.points.length > 0){
             let points = [].concat(this.points)
             points.push(this.lastPoint)
-            this.drawArea(this.ctx, {
+            this.drawArea(this.ctx, this.areas.length + 1, {
               title: this.title,
               color: this.color,
               points: points
@@ -235,10 +251,19 @@
       },
       handleCanvasMouseUp() {
         if(this.mode === 'shift'){
+          this.$emit('changed', this.shiftArea)
           this.mode = ''
           this.shiftArea = null
           this.dragBeginMousePoint = null
         }if(this.mode === 'vertexDrag'){
+          if (isExistIntersection(this.vertexDragArea.points)) {
+            //如果拖拽结果存在交叉线段，恢复拖拽点
+            this.vertexDragArea.points[this.vertexDragPointIndex] = this.vertexDragBeginPoint
+            this.refresh()
+            this.showError("存在交叉线段，取消")
+          }else{
+            this.$emit('changed', this.vertexDragArea)
+          }
           this.mode = ''
           this.vertexDragArea = null
           this.vertexDragBeginPoint = null
@@ -276,10 +301,10 @@
                 this.vertexDragPointIndex = j //顶点拖动的顶点在多边形顶点中的序号
                 this.dragBeginMousePoint = p
                 got = true
-                console.log('Vertex drag begin, area index: ', i, 
-                  ', point index: ', j, 
-                  ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )'
-                  )
+                // console.log('Vertex drag begin, area index: ', i, 
+                //   ', point index: ', j, 
+                //   ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )'
+                //   )
                 break
               }
             }
@@ -365,10 +390,10 @@
           this.vertexDragArea.points[this.vertexDragPointIndex].y = this.vertexDragBeginPoint.y + shiftY
 
           this.refresh()
-          console.log('Vertex dragging, point index: ', this.vertexDragPointIndex, 
-                  ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )',
-                  ', point to ('+ this.vertexDragArea.points[this.vertexDragPointIndex].x +',' + this.vertexDragArea.points[this.vertexDragPointIndex].y +' )'
-                  )
+          // console.log('Vertex dragging, point index: ', this.vertexDragPointIndex, 
+          //         ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )',
+          //         ', point to ('+ this.vertexDragArea.points[this.vertexDragPointIndex].x +',' + this.vertexDragArea.points[this.vertexDragPointIndex].y +' )'
+          //         )
         }
       },
       handleContextMenu(e){

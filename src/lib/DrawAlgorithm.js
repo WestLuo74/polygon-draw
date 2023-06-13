@@ -43,9 +43,19 @@ export function isIntersection(a, b, c, d) {
 
 export function isExistIntersection(points) {
     let result = false;
-    for (let i = 0; i < points.length - 1; i++) {
+    if(points.length < 3){
+        return false
+    }
+
+    for (let i = 0; i < points.length; i++) {
         let a = points[i];
-        let b = points[i + 1];
+        let b
+        if(i == (points.length-1)){
+            b = points[0]
+        }else{
+            b = points[i + 1]
+        }
+        
         for (let j = 0; j < points.length - 1; j++) {
             if (i == j) {
                 continue;
@@ -114,4 +124,17 @@ export function pointInCircle(point, circleCenterPoint, circleR) {
     let diffX = point.x - circleCenterPoint.x
     let diffY = point.y - circleCenterPoint.y
     return (diffX * diffX + diffY * diffY) <= (circleR * circleR)
+}
+
+// 通过多边形的各点位获得重心
+export function centerPoint(pointArr) {
+    let X = 0,
+        Y = 0;
+    for (let i = 0; i < pointArr.length; i++) {
+        X = X + +pointArr[i].x;
+        Y = Y + +pointArr[i].y;
+    }
+    X = X / pointArr.length;
+    Y = Y / pointArr.length;
+    return { x: X, y: Y };
 }
