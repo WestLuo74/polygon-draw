@@ -63,7 +63,7 @@
     // import FlvCop from "@/viewsCommon/components/FlvCop.vue";
   export default {
     name: "PolygonDraw",
-    emits:['created', 'createFailed', 'changed'],
+    emits:['created', 'createFailed', 'changed', 'del'],
     data() {
       return {
         // ctxSave: "",
@@ -430,6 +430,7 @@
       },
       handleDelKeyUp(){
         if(this.selectedArea){
+          this.$emit('del', this.selectedArea)
           this.areas.splice(this.selectedArea.index, 1)
           this.selectedArea = null
           this.refresh()
