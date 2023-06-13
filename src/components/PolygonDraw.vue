@@ -87,7 +87,7 @@
         vertexDragBeginPoint: null, //顶点拖动的顶点起始位置
         vertexDragPointIndex: null, //顶点拖动的顶点在多边形顶点中的序号
 
-        vertexR: 10, //多边形顶点小圆形的半径
+        vertexR: 8, //多边形顶点小圆形的半径
         selectedArea: null, //选中的多边形区域
 
         alertType: null,
@@ -146,7 +146,7 @@
           ctx.beginPath();
           ctx.arc(point.x, point.y, this.vertexR, 0, 2 * Math.PI);
           ctx.strokeStyle = color;
-          ctx.fillStyle = color; //填充颜色
+          // ctx.fillStyle = color; //填充颜色
           ctx.closePath();
           ctx.fill();
           ctx.stroke(); //绘制
@@ -196,6 +196,7 @@
             let points = [].concat(this.points)
             points.push(this.lastPoint)
             this.drawArea(this.ctx, {
+              index: this.areas.length,
               title: this.title,
               color: this.color,
               points: points
@@ -326,24 +327,22 @@
               }
             }
             
-            if(got){ //顶点选中
-              break
-            }
-
-            if (checkPP(p, areaPoints)) {
+            if((!got) && checkPP(p, areaPoints)) { //是否点中区域内部
               this.mode = 'shift'
               this.shiftArea = this.areas[i]
               this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
               this.dragBeginMousePoint = p
-              this.selectedArea = this.areas[i]
-
+              
               got = true
-              break;
+            }
+            
+            if(got){
+              this.selectedArea = this.areas[i]
+              this.refresh()
+              break
             }
           }
-          if(got){
-            this.refresh()
-          }
+          
         }
 
         if(this.mode === ''){
