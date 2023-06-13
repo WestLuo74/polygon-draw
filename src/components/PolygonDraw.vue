@@ -14,13 +14,12 @@
         />
         <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
           tabindex="0"
-          @click="handleCanvasSaveClick"
           @mousemove="handleCanvasSaveMove"
           @mouseup="handleCanvasMouseUp"
           @mousedown="handleCanvasMouseDown"
           @contextmenu="handleContextMenu"
           @keyup.delete="handleDelKeyUp"
-        ></canvas> <!-- @dblclick="handleDbClick" -->
+        ></canvas> <!-- @dblclick="handleDbClick" --> <!-- @click="handleCanvasSaveClick" -->
 
         <!--存储已生成的点线，避免被清空-->
         <!-- <canvas
@@ -259,9 +258,20 @@
         this.title = ''
         this.points = []
       },
-      handleCanvasMouseUp() {
+      handleCanvasMouseUp(e) {
+        let p = { x: e.offsetX, y: e.offsetY }
         if(this.mode === 'shift'){
           this.$emit('changed', this.shiftArea)
+          
+          if((p.x == this.dragBeginMousePoint.x) && (p.y == this.dragBeginMousePoint.y)){
+            //鼠标点下放开过程中没有移动，看作单击
+            // this.selectedArea = null
+          }else{
+            //平移了
+            this.selectedArea = null
+            this.refresh()
+          }
+          
           this.mode = ''
           this.shiftArea = null
           this.dragBeginMousePoint = null
@@ -325,6 +335,8 @@
               this.shiftArea = this.areas[i]
               this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
               this.dragBeginMousePoint = p
+              this.selectedArea = this.areas[i]
+
               got = true
               break;
             }
@@ -333,27 +345,28 @@
             this.refresh()
           }
         }
-      },
-      // handleDbClick(){
-      //   if(this.mode === 'create'){ //双击结束
-      //     this.createFinish()
-      //     this.refresh()
-      //   }
-      // },
-      handleCanvasSaveClick(e) {
-        let p = { x: e.offsetX, y: e.offsetY }
-        for (let i = 0; i < this.areas.length; i++) { //单击选中
-            if (checkPP(p, this.areas[i].points)) {
-              if(this.selectedArea == this.areas[i]){
-                this.selectedArea = null
-              }else{
-                this.selectedArea = this.areas[i]
-              }
-              this.refresh()
-              break
-            }
+
+        if(this.mode === ''){
+          if(this.selectedArea){
+            this.selectedArea = null
+            this.refresh()
+          }
         }
       },
+      // handleCanvasSaveClick(e) {
+      //   let p = { x: e.offsetX, y: e.offsetY }
+      //   for (let i = 0; i < this.areas.length; i++) { //单击选中
+      //       if (checkPP(p, this.areas[i].points)) {
+      //         if(this.selectedArea == this.areas[i]){
+      //           this.selectedArea = null
+      //         }else{
+      //           this.selectedArea = this.areas[i]
+      //         }
+      //         this.refresh()
+      //         break
+      //       }
+      //   }
+      // },
       handleCanvasSaveMove(e) {
         if(this.mode === 'create'){
           this.lastPoint = {
