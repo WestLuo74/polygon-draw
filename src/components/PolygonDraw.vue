@@ -266,6 +266,7 @@
             points: this.points
           }
           this.areas.push(area)
+          this.selectedArea = area
           this.$emit('created', area);
         }
 
