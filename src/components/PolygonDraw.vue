@@ -37,7 +37,7 @@
   </template>
    
   <script>
-  import {isExistIntersection, checkPP} from '../lib/DrawAlgorithm'
+  import {isExistIntersection, checkPP, pointInCircle} from '../lib/DrawAlgorithm'
 
   // 迭代递归法：深拷贝对象与数组
   function deepClone(obj) {
@@ -69,7 +69,7 @@
         // canSave: "",
         ctx: "",
         can: "",
-        mode: "",  //工作模式，'create'：在新绘制多边形；'shift':平移多边形；'change'：更改某个多边形的顶点
+        mode: "",  //工作模式，'create'：在新绘制多边形；'shift':平移多边形；'vertexDrag'：更改某个多边形的顶点
         debug: false,
 
         title: '',  //新建的area的title
@@ -77,9 +77,16 @@
         points: [], //新建的area的点
         lastPoint: {}, //新建的area的最后一个点
 
+        dragBeginMousePoint: null, //平移多边形或拖动顶点时起始点击的点
+
         shiftArea: null,
-        shiftBeginMousePoint: null, //移动多边形时起始点击的点
         shiftBeginPoints: null, //移动多边形时，多边形原始的点
+
+        vertexDragArea: null, //顶点拖动的多边形
+        vertexDragBeginPoint: null, //顶点拖动的顶点起始位置
+        vertexDragPointIndex: null, //顶点拖动的顶点在多边形顶点中的序号
+
+        vertexR: 10, //多边形顶点小圆形的半径
 
         alertType: null,
         alertMsg: '',
@@ -118,7 +125,7 @@
        */
       drawVertex(ctx, point, color){
           ctx.beginPath();
-          ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
+          ctx.arc(point.x, point.y, this.vertexR, 0, 2 * Math.PI);
           ctx.strokeStyle = color;
           ctx.fillStyle = color; //填充颜色
           ctx.closePath();
@@ -230,7 +237,12 @@
         if(this.mode === 'shift'){
           this.mode = ''
           this.shiftArea = null
-          this.shiftBeginMousePoint = null
+          this.dragBeginMousePoint = null
+        }if(this.mode === 'vertexDrag'){
+          this.mode = ''
+          this.vertexDragArea = null
+          this.vertexDragBeginPoint = null
+          this.vertexDragPointIndex = null
         }
       },
       handleCanvasMouseDown(e) {
@@ -252,14 +264,41 @@
             x: e.offsetX,
             y: e.offsetY
           }
+          let got = false //是否选中了顶点（拖动顶点）或选中了多边形（平移）
           for (let i = 0; i < this.areas.length; i++) {
-            if (checkPP(p, this.areas[i].points)) {
+            let areaPoints = this.areas[i].points;
+
+            for(let j = 0; j < areaPoints.length; j++){
+              if(pointInCircle(p, areaPoints[j], this.vertexR)){ //选中顶点
+                this.mode = 'vertexDrag'
+                this.vertexDragArea = this.areas[i] //顶点拖动的多边形
+                this.vertexDragBeginPoint = deepClone(areaPoints[j]) //顶点拖动的顶点起始位置
+                this.vertexDragPointIndex = j //顶点拖动的顶点在多边形顶点中的序号
+                this.dragBeginMousePoint = p
+                got = true
+                console.log('Vertex drag begin, area index: ', i, 
+                  ', point index: ', j, 
+                  ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )'
+                  )
+                break
+              }
+            }
+            
+            if(got){ //顶点选中
+              break
+            }
+
+            if (checkPP(p, areaPoints)) {
               this.mode = 'shift'
               this.shiftArea = this.areas[i]
               this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
-              this.shiftBeginMousePoint = p
+              this.dragBeginMousePoint = p
+              got = true
               break;
             }
+          }
+          if(got){
+            this.refresh()
           }
         }
       },
@@ -283,8 +322,8 @@
           
           this.refresh()
         }else if(this.mode === 'shift'){ //正在平移
-          let shiftX = e.offsetX - this.shiftBeginMousePoint.x
-          let shiftY = e.offsetY - this.shiftBeginMousePoint.y
+          let shiftX = e.offsetX - this.dragBeginMousePoint.x
+          let shiftY = e.offsetY - this.dragBeginMousePoint.y
 
           // 多边形不可出画板
           for (let i = 0; i < this.shiftBeginPoints.length; i++) {
@@ -307,6 +346,29 @@
           // console.log('shiftBeginPoints[0]:', this.shiftBeginPoints[0].x, ', ', this.shiftBeginPoints[0].y)
 
           this.refresh()
+        }else if(this.mode === 'vertexDrag'){
+          let shiftX = e.offsetX - this.dragBeginMousePoint.x
+          let shiftY = e.offsetY - this.dragBeginMousePoint.y
+
+          // 顶点拖动不可出画板
+          if (
+            this.vertexDragBeginPoint.x + shiftX >= this.can.width ||
+            this.vertexDragBeginPoint.x + shiftX <= 0 ||
+            this.vertexDragBeginPoint.y + shiftY >= this.can.height ||
+            this.vertexDragBeginPoint.y + shiftY <= 0
+          ) {
+            e.preventDefault();
+            return
+          }
+
+          this.vertexDragArea.points[this.vertexDragPointIndex].x = this.vertexDragBeginPoint.x + shiftX
+          this.vertexDragArea.points[this.vertexDragPointIndex].y = this.vertexDragBeginPoint.y + shiftY
+
+          this.refresh()
+          console.log('Vertex dragging, point index: ', this.vertexDragPointIndex, 
+                  ', point begin ('+ this.vertexDragBeginPoint.x +',' + this.vertexDragBeginPoint.y +' )',
+                  ', point to ('+ this.vertexDragArea.points[this.vertexDragPointIndex].x +',' + this.vertexDragArea.points[this.vertexDragPointIndex].y +' )'
+                  )
         }
       },
       handleContextMenu(e){

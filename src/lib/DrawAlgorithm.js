@@ -103,3 +103,15 @@ export function checkPP(point, polygon) {
     // 如果为偶数 说明在多边形外面，如果为奇数，说明在多边形内部
     return count % 2 == 0 ? false : true;
   }
+
+  /**
+   * 判断目标点是否在圆内
+   * @param {*} point 目标点
+   * @param {*} circleCenterPoint 圆中心点
+   * @param {*} circleR 圆半径
+   */
+export function pointInCircle(point, circleCenterPoint, circleR) {
+    let diffX = point.x - circleCenterPoint.x
+    let diffY = point.y - circleCenterPoint.y
+    return (diffX * diffX + diffY * diffY) <= (circleR * circleR)
+}
