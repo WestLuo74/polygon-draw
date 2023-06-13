@@ -13,11 +13,13 @@
           "
         />
         <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
+          tabindex="0"
           @click="handleCanvasSaveClick"
           @mousemove="handleCanvasSaveMove"
           @mouseup="handleCanvasMouseUp"
           @mousedown="handleCanvasMouseDown"
           @contextmenu="handleContextMenu"
+          @keyup.delete="handleDelKeyUp"
         ></canvas> <!-- @dblclick="handleDbClick" -->
 
         <!--存储已生成的点线，避免被清空-->
@@ -87,6 +89,7 @@
         vertexDragPointIndex: null, //顶点拖动的顶点在多边形顶点中的序号
 
         vertexR: 10, //多边形顶点小圆形的半径
+        selectedArea: null, //选中的多边形区域
 
         alertType: null,
         alertMsg: '',
@@ -94,9 +97,12 @@
       };
     },
     mounted() {
+      for (let i = 0; i < this.areas.length; i++) { //产生序号字段
+        this.areas[i].index = i
+      }
       this.setTimer()
       this.initCanvas()
-      this.refresh()
+      this.refresh()      
     },
     props: ['areas'],
     /*
@@ -118,21 +124,20 @@
     watch: {
     },
     methods: {
-      drawTitle(ctx, index, area){
+      /**
+       * 在多边形的重心附近绘制序号和title
+       * @param {*} ctx 
+       * @param {*} area 
+       */
+      drawTitle(ctx, area){
         this.ctx.font = "20px 宋体";
         // this.ctx.fillStyle = "rgb(255,165,0)";
         this.ctx.fillStyle = area.color
         let heavyHeart = centerPoint(area.points);
         // y向下为正
-        ctx.fillText(
-          '' + index + '.' + area.title,
-          heavyHeart.x - 40,
-          heavyHeart.y
-          // 随便找两个不相邻的点的中点好了
-          // (area.fenceDetailDTOS[0].x + area.fenceDetailDTOS[2].x) / 2,
-          // (area.fenceDetailDTOS[0].y + area.fenceDetailDTOS[2].y) / 2
-        );
+        ctx.fillText('' + (area.index + 1) + '.' + area.title, heavyHeart.x - 40, heavyHeart.y);
       },
+
       /**
        * 绘制多边形的顶点，为一个小圆形
        * @param {*} point
@@ -148,7 +153,7 @@
           ctx.stroke(); //绘制
 
       },
-      drawArea(ctx, index, area){
+      drawArea(ctx, area){
         let pointArr = area.points;
         if (pointArr.length > 1) {
           ctx.beginPath();
@@ -157,7 +162,11 @@
             ctx.lineTo(pointArr[i].x, pointArr[i].y);
           }
           ctx.strokeStyle = area.color;
-          ctx.fillStyle = "rgba(161,195,255,0.5)"; //填充颜色，半透明
+          if(this.selectedArea == area){
+            ctx.fillStyle = "rgba(161,0,0,0.5)"; //选中区域填充颜色，半透明
+          }else{
+            ctx.fillStyle = "rgba(161,195,255,0.5)"; //填充颜色，半透明
+          }
           ctx.closePath();
           ctx.fill();
           ctx.stroke(); //绘制
@@ -167,7 +176,7 @@
             this.drawVertex(ctx, pointArr[i], area.color)
           }
         }
-        this.drawTitle(ctx, index, area)
+        this.drawTitle(ctx, area)
       },
       clearCanvas(canvas){ //重新设置canvas高宽，已达到清除canvas的目的
         var w = canvas.width;
@@ -180,14 +189,14 @@
         this.clearCanvas(this.can)
         
         for(let i = 0; i< this.areas.length; i++){
-          this.drawArea(this.ctx, i + 1, this.areas[i])
+          this.drawArea(this.ctx, this.areas[i])
         }
 
         if (this.mode === 'create'){
           if(this.points.length > 0){
             let points = [].concat(this.points)
             points.push(this.lastPoint)
-            this.drawArea(this.ctx, this.areas.length + 1, {
+            this.drawArea(this.ctx, {
               title: this.title,
               color: this.color,
               points: points
@@ -238,6 +247,7 @@
           this.showError(msg)
         }else{
           let area = { //加入到areas
+            index: this.areas.length,
             title: this.title,
             color: this.color,
             points: this.points
@@ -285,10 +295,7 @@
         }
 
         if(this.mode === ''){
-          let p = {
-            x: e.offsetX,
-            y: e.offsetY
-          }
+          let p = { x: e.offsetX, y: e.offsetY }
           let got = false //是否选中了顶点（拖动顶点）或选中了多边形（平移）
           for (let i = 0; i < this.areas.length; i++) {
             let areaPoints = this.areas[i].points;
@@ -334,8 +341,17 @@
       //   }
       // },
       handleCanvasSaveClick(e) {
-        if(this.debug){
-          console.log(e)
+        let p = { x: e.offsetX, y: e.offsetY }
+        for (let i = 0; i < this.areas.length; i++) { //单击选中
+            if (checkPP(p, this.areas[i].points)) {
+              if(this.selectedArea == this.areas[i]){
+                this.selectedArea = null
+              }else{
+                this.selectedArea = this.areas[i]
+              }
+              this.refresh()
+              break
+            }
         }
       },
       handleCanvasSaveMove(e) {
@@ -399,6 +415,13 @@
       handleContextMenu(e){
         e.preventDefault();
         return false;
+      },
+      handleDelKeyUp(){
+        if(this.selectedArea){
+          this.areas.splice(this.selectedArea.index, 1)
+          this.selectedArea = null
+          this.refresh()
+        }
       },
       showError: function (msg) {
         this.showAlert("error", msg);
