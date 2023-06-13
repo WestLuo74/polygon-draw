@@ -258,19 +258,19 @@
         this.title = ''
         this.points = []
       },
-      handleCanvasMouseUp(e) {
-        let p = { x: e.offsetX, y: e.offsetY }
+      handleCanvasMouseUp() {
         if(this.mode === 'shift'){
           this.$emit('changed', this.shiftArea)
           
-          if((p.x == this.dragBeginMousePoint.x) && (p.y == this.dragBeginMousePoint.y)){
-            //鼠标点下放开过程中没有移动，看作单击
-            // this.selectedArea = null
-          }else{
-            //平移了
-            this.selectedArea = null
-            this.refresh()
-          }
+          // let p = { x: e.offsetX, y: e.offsetY }
+          // if((p.x == this.dragBeginMousePoint.x) && (p.y == this.dragBeginMousePoint.y)){
+          //   //鼠标点下放开过程中没有移动，看作单击
+          //   // this.selectedArea = null
+          // }else{
+          //   //平移了
+          //   this.selectedArea = null
+          //   this.refresh()
+          // }
           
           this.mode = ''
           this.shiftArea = null
