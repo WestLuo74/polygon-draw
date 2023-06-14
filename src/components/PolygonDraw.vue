@@ -1,41 +1,13 @@
 <template>
-    <div>
-      <div class="canvas-box solid" ref="canvasBox">
-        <img
-          src="@/assets/test.jpg"
-          style="
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            object-fit: fill;
-          "
-        />
-        <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
-          tabindex="0"
-          @mousemove="handleCanvasSaveMove"
-          @mouseup="handleCanvasMouseUp"
-          @mousedown="handleCanvasMouseDown"
-          @contextmenu="handleContextMenu"
-          @keyup.delete="handleDelKeyUp"
-        ></canvas> <!-- @dblclick="handleDbClick" --> <!-- @click="handleCanvasSaveClick" -->
-
-        <!--存储已生成的点线，避免被清空-->
-        <!-- <canvas
-          ref="canvasSave"
-          @click="handleCanvasSaveClick"
-          @mousemove="handleCanvasSaveMove"
-          @mouseup="handleCanvasMouseUp"
-          @mousedown="handleCanvasMouseDown"
-        ></canvas> -->
-      </div>
-      <!-- <div v-if="alertType" :class="alertType" class="alert alert-box" role="alert">{{ alertMsg }}</div> -->
-      <el-dialog v-if="alertType" :visible="true">
-        <el-alert title="" center :type="alertType" show-icon> {{ alertMsg }}  </el-alert>
-      </el-dialog>
-    </div>
-  </template>
+  <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
+    tabindex="0"
+    @mousemove="handleCanvasSaveMove"
+    @mouseup="handleCanvasMouseUp"
+    @mousedown="handleCanvasMouseDown"
+    @contextmenu="handleContextMenu"
+    @keyup.delete="handleDelKeyUp"
+  ></canvas> <!-- @dblclick="handleDbClick" --> <!-- @click="handleCanvasSaveClick" -->
+</template>
    
   <script>
   import {isExistIntersection, checkPP, pointInCircle, centerPoint} from '../lib/DrawAlgorithm'
@@ -206,8 +178,10 @@
       },
       initCanvas() {
         this.can = this.$refs["canvas"];
-        this.can.width = this.$refs["canvasBox"].clientWidth;
-        this.can.height = this.$refs["canvasBox"].clientHeight;
+        // this.can.width = this.$refs["canvasBox"].clientWidth;
+        // this.can.height = this.$refs["canvasBox"].clientHeight;
+        this.can.width = this.$refs["canvas"].clientWidth;
+        this.can.height = this.$refs["canvas"].clientHeight;
         // console.log(can.width, can.height);
         this.ctx = this.can.getContext("2d");
         this.ctx.strokeStyle = this.lineColor; //线条颜色
@@ -487,21 +461,7 @@
   </script>
    
 <style scoped>
-  .canvas-box {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-
-canvas {
-   position: absolute;
-   top: 0;
-   left: 0;
-    /* width: 1000px;
-    height: 800px; */
-   width: 100%;
-   height: 100%;
- }
+  
  .shift-cursor{
   cursor: move;
  }

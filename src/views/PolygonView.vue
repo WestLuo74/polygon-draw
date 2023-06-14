@@ -1,80 +1,115 @@
 <template>
-    <div>
-      <PolygonDraw
-        :areas="areas"
-        ref="polygonDrawRef"
-        style="height: 600px; width: 100%"
-      />
+    <div style="height: 600px; width: 100%">
+      <div class="canvas-box solid" ref="canvasBox">
+        <img
+          src="@/assets/test.jpg"
+          style="
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: fill;
+          "
+        />
+        <PolygonDraw id="canvas"
+          :areas="areas"
+          ref="polygonDrawRef"
+        />
+      </div>
+
       <div class="dialog-footer" style="margin-top: 10px">        
         <el-button plain @click="drawArea()">绘制区域</el-button>
         <el-button plain @click="cancelDraw()">取消绘制</el-button>
         <el-button plain @click="resetForm">重 置</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </div>
+
+      <!-- <div v-if="alertType" :class="alertType" class="alert alert-box" role="alert">{{ alertMsg }}</div> -->
+      <el-dialog v-if="alertType" :visible="true">
+        <el-alert title="" center :type="alertType" show-icon> {{ alertMsg }}  </el-alert>
+      </el-dialog>
+
     </div>
-  </template>
+</template>
    
-  <script>
-  // import config from "../config";
-  // import dialogControlorMixin from "@vcom/mixins/dialogControlorMixin";
-  // import entMixin from "@vcom/mixins/entMixin";
-  import PolygonDraw from "../components/PolygonDraw.vue";
-   
-  export default {
-    name: "PolygonView",
-   
-    // mixins: [dialogControlorMixin, entMixin],
-   
-    components: { PolygonDraw },
-   
-    data() {
-      return {
-        areas:[
-          {
-            title: 'test1',
-            color: 'red',
-            points:[
-              {x: 10, y: 20},
-              {x: 100, y: 200},
-              {x: 150, y: 210},
-              {x: 110, y: 120},
-              {x: 70, y: 50},
-            ]
-          },
-          {
-            title: 'test2',
-            color: 'blue',
-            points:[
-              {x: 210, y: 220},
-              {x: 300, y: 400},
-              {x: 350, y: 410},
-              {x: 310, y: 320},
-              {x: 170, y: 150},
-            ]
-          }
-        ]
-      };
+<script>
+// import config from "../config";
+// import dialogControlorMixin from "@vcom/mixins/dialogControlorMixin";
+// import entMixin from "@vcom/mixins/entMixin";
+import PolygonDraw from "../components/PolygonDraw.vue";
+  
+export default {
+  name: "PolygonView",
+  
+  // mixins: [dialogControlorMixin, entMixin],
+  
+  components: { PolygonDraw },
+  
+  data() {
+    return {
+      alertType: null,
+      alertMsg:'',
+      areas:[
+        {
+          title: 'test1',
+          color: 'red',
+          points:[
+            {x: 10, y: 20},
+            {x: 100, y: 200},
+            {x: 150, y: 210},
+            {x: 110, y: 120},
+            {x: 70, y: 50},
+          ]
+        },
+        {
+          title: 'test2',
+          color: 'blue',
+          points:[
+            {x: 210, y: 220},
+            {x: 300, y: 400},
+            {x: 350, y: 410},
+            {x: 310, y: 320},
+            {x: 170, y: 150},
+          ]
+        }
+      ]
+    };
+  },
+  
+  methods: {
+    drawArea() {
+      // console.log(e)
+      this.$refs.polygonDrawRef.create()
     },
-   
-    methods: {
-      drawArea() {
-        // console.log(e)
-        this.$refs.polygonDrawRef.create()
-      },
-      cancelDraw(){
-        this.$refs.polygonDrawRef.createCancel()
-      },
-      // 重置
-      resetForm() {
-      },
-      // 确定
-      submitForm() {
-      },
+    cancelDraw(){
+      this.$refs.polygonDrawRef.createCancel()
     },
-  };
-  </script>
+    // 重置
+    resetForm() {
+    },
+    // 确定
+    submitForm() {
+    },
+  },
+};
+</script>
    
-  <style>
+<style>
+  .canvas-box {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+#canvas {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+ }
+
   .intrusion {
     display: flex;
     justify-content: space-between;
