@@ -13,8 +13,13 @@
           "
         />
         <PolygonDraw id="canvas"
-          :areas="areas"
+          :areas="areas"          
           ref="polygonDrawRef"
+          @create-failed="showError"
+          @error="showError"
+          @changed="onAreaChanged"
+          @created="onAreaCreated"
+          @del="onAreaDel"
         />
       </div>
 
@@ -49,7 +54,8 @@ export default {
   data() {
     return {
       alertType: null,
-      alertMsg:'',
+      alertMsg: '',
+      alertTime: null,
       areas:[
         {
           title: 'test1',
@@ -76,6 +82,10 @@ export default {
       ]
     };
   },
+
+  mounted(){
+    this.setTimer()
+  },
   
   methods: {
     drawArea() {
@@ -90,6 +100,47 @@ export default {
     },
     // 确定
     submitForm() {
+    },
+    onAreaChanged(area){
+      console.log('Area "' + area.index + '.' + area.title + '" changed!')
+    },
+    onAreaCreated(area){
+      console.log('Area "' + area.index + '.' + area.title + '" created!')
+    },
+    onAreaDel(area){
+      console.log('Area "' + area.index + '.' + area.title + '" deleted!')
+    },
+    showError: function (msg) {
+      this.showAlert("error", msg);
+      // alert(msg);
+    },
+    showSuccess: function (msg) {
+      //alert(msg);
+      this.showAlert("success", msg);
+    },
+    showAlert: function (type, msg) { //为防止显示后导致右键菜单隐藏失效，延时200ms再显示
+      setTimeout(() => {
+        this.alertType = type;
+        this.alertMsg = msg;
+        this.alertTime = new Date();
+        // alert(msg);
+      }, 200)
+    },
+    setTimer() {
+      if (this.timer == null) {
+        this.timer = setInterval(() => {
+          if (!this.alertTime) {
+            return
+          }
+          // console.log('开始定时...每过一秒执行一次')
+          let now = new Date();
+          //显示信息，3秒后消失
+          if (parseInt(now - this.alertTime) > 3000) {
+            this.alertType = "";
+            this.alertMsg = "";
+          }
+        }, 1000)
+      }
     },
   },
 };

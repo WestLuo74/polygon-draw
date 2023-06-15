@@ -35,7 +35,7 @@
     // import FlvCop from "@/viewsCommon/components/FlvCop.vue";
   export default {
     name: "PolygonDraw",
-    emits:['created', 'createFailed', 'changed', 'del'],
+    emits:['created', 'create-failed', 'changed', 'del'],
     data() {
       return {
         // ctxSave: "",
@@ -61,17 +61,13 @@
 
         vertexR: 8, //多边形顶点小圆形的半径
         selectedArea: null, //选中的多边形区域
-
-        alertType: null,
-        alertMsg: '',
-        alertTime: null
       };
     },
     mounted() {
       for (let i = 0; i < this.areas.length; i++) { //产生序号字段
         this.areas[i].index = i
       }
-      this.setTimer()
+      
       this.initCanvas()
       this.refresh()      
     },
@@ -226,12 +222,10 @@
         this.mode = ''
         if (this.points.length < 3) { //多边形顶点不能小于3个
           let msg = '多边形顶点不能小于3个'
-          this.$emit('createFailed', false, msg);
-          this.showError(msg)
+          this.$emit('create-failed', msg);          
         }else if (isExistIntersection(this.points)) {
           let msg = "存在交叉线段，请重新绘制"
-          this.$emit('createFailed', false, msg);
-          this.showError(msg)
+          this.$emit('create-failed', msg);
         }else{
           let area = { //加入到areas
             index: this.areas.length,
@@ -269,7 +263,7 @@
             //如果拖拽结果存在交叉线段，恢复拖拽点
             this.vertexDragArea.points[this.vertexDragPointIndex] = this.vertexDragBeginPoint
             this.refresh()
-            this.showError("存在交叉线段，取消")
+            this.$emit('error', "存在交叉线段，操作取消")
           }else{
             this.$emit('changed', this.vertexDragArea)
           }
@@ -422,38 +416,6 @@
           this.areas.splice(this.selectedArea.index, 1)
           this.selectedArea = null
           this.refresh()
-        }
-      },
-      showError: function (msg) {
-        this.showAlert("error", msg);
-        // alert(msg);
-      },
-      showSuccess: function (msg) {
-        //alert(msg);
-        this.showAlert("success", msg);
-      },
-      showAlert: function (type, msg) { //为防止显示后导致右键菜单隐藏失效，延时100ms再显示
-        setTimeout(() => {
-          this.alertType = type;
-          this.alertMsg = msg;
-          this.alertTime = new Date();
-          // alert(msg);
-        }, 200)
-      },
-      setTimer() {
-        if (this.timer == null) {
-          this.timer = setInterval(() => {
-            if (!this.alertTime) {
-              return
-            }
-            // console.log('开始定时...每过一秒执行一次')
-            let now = new Date();
-            //显示信息，3秒后消失
-            if (parseInt(now - this.alertTime) > 3000) {
-              this.alertType = "";
-              this.alertMsg = "";
-            }
-          }, 1000)
         }
       },
     },
