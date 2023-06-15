@@ -1,6 +1,6 @@
 <template>
-  <!-- <canvas ref="canvas" :class="cursorType" tabindex="0" -->
-  <canvas ref="canvas" :class="(mode == 'shift' ? 'shift-cursor' : 'normal-cursor')" tabindex="0"
+  <!-- <canvas ref="canvas" :class="(mode == 'shift' ? 'shift-cursor' : 'normal-cursor')" tabindex="0" -->
+  <canvas ref="canvas" :class="cursorType" tabindex="0"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
     @mousedown="handleMouseDown"
