@@ -1,12 +1,13 @@
 <template>
   <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
     tabindex="0"
-    @mousemove="handleCanvasSaveMove"
-    @mouseup="handleCanvasMouseUp"
-    @mousedown="handleCanvasMouseDown"
+    @mousemove="handleMouseMove"
+    @mouseup="handleMouseUp"
+    @mousedown="handleMouseDown"
     @contextmenu="handleContextMenu"
     @keyup.delete="handleDelKeyUp"
-  ></canvas> <!-- @dblclick="handleDbClick" --> <!-- @click="handleCanvasSaveClick" -->
+    @keyup.esc="createCancel"
+  ></canvas>
 </template>
    
   <script>
@@ -35,7 +36,7 @@
     // import FlvCop from "@/viewsCommon/components/FlvCop.vue";
   export default {
     name: "PolygonDraw",
-    emits:['created', 'create-failed', 'changed', 'del'],
+    emits:['created', 'create-failed', 'changed', 'del', 'selected'],
     data() {
       return {
         // ctxSave: "",
@@ -152,6 +153,9 @@
         canvas.height = h;
         },
       refresh(){
+        this.can.width = this.$refs["canvas"].clientWidth;
+        this.can.height = this.$refs["canvas"].clientHeight;
+
         // this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
         this.clearCanvas(this.can)
         
@@ -185,7 +189,7 @@
         this.ctx.lineWidth = 4; //线条粗细
         this.ctx.globalAlpha = 0.7; //半透明
    
-        // this.canSave = this.$refs["canvasSave"];
+        // this.canSave = this.$refs["Canvas"];
         // this.canSave.width = this.$refs["canvasBox"].clientWidth;
         // this.canSave.height = this.$refs["canvasBox"].clientHeight;
         // this.ctxSave = this.canSave.getContext("2d");
@@ -197,14 +201,18 @@
         // console.log(can);
         // console.log(canSave);
       },
+      select(area){        
+        if(area != this.selectedArea){
+          this.selectedArea = area
+          this.$emit('selected', area)
+          this.refresh()
+        }
+      },
       create(title='area 1', color='black'){
         this.title = title
         this.color = color
         this.mode = 'create'
-        if(this.selectedArea){
-          this.selectedArea = null
-          this.refresh()
-        }
+        this.select(null)
       },
       createCancel(){
         if (this.mode !== 'create') {
@@ -234,26 +242,19 @@
             points: this.points
           }
           this.areas.push(area)
-          this.selectedArea = area
           this.$emit('created', area);
+          this.select(area)
         }
 
         this.title = ''
         this.points = []
       },
-      handleCanvasMouseUp() {
+      handleMouseUp(e) {
         if(this.mode === 'shift'){
-          this.$emit('changed', this.shiftArea)
-          
-          // let p = { x: e.offsetX, y: e.offsetY }
-          // if((p.x == this.dragBeginMousePoint.x) && (p.y == this.dragBeginMousePoint.y)){
-          //   //鼠标点下放开过程中没有移动，看作单击
-          //   // this.selectedArea = null
-          // }else{
-          //   //平移了
-          //   this.selectedArea = null
-          //   this.refresh()
-          // }
+          let p = { x: e.offsetX, y: e.offsetY }
+          if((p.x != this.dragBeginMousePoint.x) || (p.y != this.dragBeginMousePoint.y)){
+            this.$emit('changed', this.shiftArea)
+          }
           
           this.mode = ''
           this.shiftArea = null
@@ -273,7 +274,7 @@
           this.vertexDragPointIndex = null
         }
       },
-      handleCanvasMouseDown(e) {
+      handleMouseDown(e) {
         // console.log("Mouse down: " + e.buttons)
         if(this.mode === 'create'){
           let newPoint = {
@@ -320,8 +321,7 @@
             }
             
             if(got){
-              this.selectedArea = this.areas[i]
-              this.refresh()
+              this.select(this.areas[i])
               return
             }
           }
@@ -329,26 +329,11 @@
 
         if(this.mode === ''){
           if(this.selectedArea){
-            this.selectedArea = null
-            this.refresh()
+            this.select(null)
           }
         }
       },
-      // handleCanvasSaveClick(e) {
-      //   let p = { x: e.offsetX, y: e.offsetY }
-      //   for (let i = 0; i < this.areas.length; i++) { //单击选中
-      //       if (checkPP(p, this.areas[i].points)) {
-      //         if(this.selectedArea == this.areas[i]){
-      //           this.selectedArea = null
-      //         }else{
-      //           this.selectedArea = this.areas[i]
-      //         }
-      //         this.refresh()
-      //         break
-      //       }
-      //   }
-      // },
-      handleCanvasSaveMove(e) {
+      handleMouseMove(e) {
         if(this.mode === 'create'){
           this.lastPoint = {
             x: e.offsetX,
@@ -406,18 +391,31 @@
           //         )
         }
       },
+      /**
+       * 去掉右键菜单
+       * @param {*} e 
+       */
       handleContextMenu(e){
         e.preventDefault();
         return false;
       },
+      /**
+       * 删除指定区域
+       * @param {*} area 
+       */
+      del(area) {
+        this.$emit('del', area)
+        this.areas.splice(area.index, 1)
+        this.select(null)
+      },
+        /**
+       * 按下删除键时，删除选定的区域
+       */
       handleDelKeyUp(){
         if(this.selectedArea){
-          this.$emit('del', this.selectedArea)
-          this.areas.splice(this.selectedArea.index, 1)
-          this.selectedArea = null
-          this.refresh()
+          this.del(this.selectedArea)
         }
-      },
+      },  
     },
   };
   </script>

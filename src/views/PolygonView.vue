@@ -1,5 +1,5 @@
 <template>
-    <div style="height: 600px; width: 100%">
+  <!-- <div style="height: 600px; width: 100%">
       <div class="canvas-box solid" ref="canvasBox">
         <img
           src="@/assets/test.jpg"
@@ -11,37 +11,39 @@
             left: 0;
             object-fit: fill;
           "
-        />
-        <PolygonDraw id="canvas"
-          :areas="areas"          
-          ref="polygonDrawRef"
-          @create-failed="showError"
-          @error="showError"
-          @changed="onAreaChanged"
-          @created="onAreaCreated"
-          @del="onAreaDel"
-        />
-      </div>
-
-      <div class="dialog-footer" style="margin-top: 10px">        
-        <el-button plain @click="drawArea()">绘制区域</el-button>
-        <el-button plain @click="cancelDraw()">取消绘制</el-button>
-        <el-button plain @click="resetForm">重 置</el-button>
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-      </div>
-
-      <!-- <div v-if="alertType" :class="alertType" class="alert alert-box" role="alert">{{ alertMsg }}</div> -->
-      <el-dialog v-if="alertType" :visible="true">
-        <el-alert title="" center :type="alertType" show-icon> {{ alertMsg }}  </el-alert>
-      </el-dialog>
-
+        /> -->
+  <div
+    style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+    <div class="pic-box">
+      <img src="@/assets/test.jpg" ref="backgroundImg" class="pic-img" @load='imgOnLoad' />
+      <PolygonDraw v-if="canvasWidth > 0" id="canvas" 
+        :areas="areas"
+        ref="polygonDrawRef"
+        @create-failed="showError"
+        @error="showError" 
+        @changed="onAreaChanged" 
+        @created="onAreaCreated" 
+        @del="onAreaDel" 
+        @selected="onAreaSelected"
+        :width="canvasWidth"
+        :height="canvasHeight" />
+      <!-- :style="{width: canvasWidth, height: canvasHeight}" -->
     </div>
+
+    <div class="dialog-footer" style="margin-top: 10px; position: absolute; left: 0; bottom: 0;">
+      <el-button plain @click="drawArea()">绘制区域</el-button>
+      <el-button plain @click="cancelDraw()">取消绘制</el-button>      
+    </div>
+
+    <!-- <div v-if="alertType" :class="alertType" class="alert alert-box" role="alert">{{ alertMsg }}</div> -->
+    <el-dialog v-if="alertType" :visible="true">
+      <el-alert title="" center :type="alertType" show-icon> {{ alertMsg }} </el-alert>
+    </el-dialog>
+
+  </div>
 </template>
    
 <script>
-// import config from "../config";
-// import dialogControlorMixin from "@vcom/mixins/dialogControlorMixin";
-// import entMixin from "@vcom/mixins/entMixin";
 import PolygonDraw from "../components/PolygonDraw.vue";
   
 export default {
@@ -56,6 +58,10 @@ export default {
       alertType: null,
       alertMsg: '',
       alertTime: null,
+
+      canvasWidth: 0,
+      canvasHeight: 0,
+
       areas:[
         {
           title: 'test1',
@@ -84,22 +90,20 @@ export default {
   },
 
   mounted(){
-    this.setTimer()
+    this.setTimer()   
   },
   
   methods: {
+    imgOnLoad(){
+      this.canvasWidth = this.$refs.backgroundImg.offsetWidth
+      this.canvasHeight = this.$refs.backgroundImg.offsetHeight
+    },
     drawArea() {
       // console.log(e)
       this.$refs.polygonDrawRef.create()
     },
     cancelDraw(){
       this.$refs.polygonDrawRef.createCancel()
-    },
-    // 重置
-    resetForm() {
-    },
-    // 确定
-    submitForm() {
     },
     onAreaChanged(area){
       console.log('Area "' + area.index + '.' + area.title + '" changed!')
@@ -109,6 +113,13 @@ export default {
     },
     onAreaDel(area){
       console.log('Area "' + area.index + '.' + area.title + '" deleted!')
+    },
+    onAreaSelected(area){
+      if(area){
+        console.log('Area "' + area.index + '.' + area.title + '" selected!')
+      }else{
+        console.log('Area unselected!')        
+      }
     },
     showError: function (msg) {
       this.showAlert("error", msg);
@@ -147,51 +158,37 @@ export default {
 </script>
    
 <style>
-  .canvas-box {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
+.canvas-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.pic-box {
+  /* display: flex; */
+  /* position: absolute; */
+  top: 0;
+  left: 0;
+}
+
+.pic-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  object-fit: none;
+  z-index: 1;
+}
 
 #canvas {
-   position: absolute;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
- }
-
-  .intrusion {
-    display: flex;
-    justify-content: space-between;
-  }
-   
-  .item_title {
-    background-color: aliceblue;
-    margin-top: 10px;
-  }
-   
-  .item_row {
-    display: flex;
-    justify-content: space-between;
-  }
-   
-  .block .show-input {
-    width: 55% !important;
-    margin-right: 250px !important;
-  }
-  .block .el-slider__input {
-    width: 100px !important;
-  }
-  .block .el-slider__input .el-input {
-    width: 100% !important;
-  }
-  .areaDash {
-    width: 500px;
-    height: 500px;
-  }
-  .DrawStyle {
-    width: 150px !important;
-  }
-  </style>
+  position: absolute;
+  /* display: flex; */
+  top: 0;
+  left: 0;
+  /* width: 500px;
+   height: 400px; */
+  /* width: 100%;
+   height: 100%; */
+  z-index: 10;
+}
+</style>
   
