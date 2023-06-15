@@ -1,5 +1,6 @@
 <template>
-  <canvas ref="canvas" :class="cursorType" tabindex="0"
+  <!-- <canvas ref="canvas" :class="cursorType" tabindex="0" -->
+  <canvas ref="canvas" :class="(mode == 'shift' ? 'shift-cursor' : 'normal-cursor')" tabindex="0"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
     @mousedown="handleMouseDown"
@@ -61,6 +62,8 @@
 
         vertexR: 8, //多边形顶点小圆形的半径
         selectedArea: null, //选中的多边形区域
+
+        cursorType: 'normal-cursor' //鼠标类型的class，见css
       };
     },
     mounted() {
@@ -196,14 +199,14 @@
       create(title='area 1', color='black'){
         this.title = title
         this.color = color
-        this.mode = 'create'
+        this.setMode('create')
         this.select(null)
       },
       createCancel(){
         if (this.mode !== 'create') {
           return
         }
-        this.mode = ''
+        this.setMode('')
         this.title = ''
         this.points = []
         this.refresh()
@@ -212,7 +215,7 @@
         if (this.mode !== 'create') {
           return
         }
-        this.mode = ''
+        this.setMode('')
         if (this.points.length < 3) { //多边形顶点不能小于3个
           let msg = '多边形顶点不能小于3个'
           this.$emit('create-failed', msg);          
@@ -241,10 +244,10 @@
             this.$emit('changed', this.shiftArea)
           }
           
-          this.mode = ''
+          this.setMode('')
           this.shiftArea = null
           this.dragBeginMousePoint = null
-        }if(this.mode === 'vertexDrag'){
+        }else if(this.mode === 'vertexDrag'){
           if (isExistIntersection(this.vertexDragArea.points)) {
             //如果拖拽结果存在交叉线段，恢复拖拽点
             this.vertexDragArea.points[this.vertexDragPointIndex] = this.vertexDragBeginPoint
@@ -253,7 +256,7 @@
           }else{
             this.$emit('changed', this.vertexDragArea)
           }
-          this.mode = ''
+          this.setMode('')
           this.vertexDragArea = null
           this.vertexDragBeginPoint = null
           this.vertexDragPointIndex = null
@@ -282,7 +285,7 @@
 
             for(let j = 0; j < areaPoints.length; j++){
               if(pointInCircle(p, areaPoints[j], this.vertexR)){ //选中顶点
-                this.mode = 'vertexDrag'
+                this.setMode('vertexDrag')
                 this.vertexDragArea = this.areas[i] //顶点拖动的多边形
                 this.vertexDragBeginPoint = deepClone(areaPoints[j]) //顶点拖动的顶点起始位置
                 this.vertexDragPointIndex = j //顶点拖动的顶点在多边形顶点中的序号
@@ -297,7 +300,7 @@
             }
             
             if((!got) && checkPP(p, areaPoints)) { //是否点中区域内部
-              this.mode = 'shift'
+              this.setMode('shift')
               this.shiftArea = this.areas[i]
               this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
               this.dragBeginMousePoint = p
@@ -306,6 +309,7 @@
             
             if(got){
               this.select(this.areas[i])
+              this.refresh()
               return
             }
           }
@@ -400,17 +404,21 @@
           this.del(this.selectedArea)
         }
       },  
+      setMode(mode){ 
+        if(this.mode === mode){
+          return
+        }
+        this.mode = mode
+        if(this.mode === 'shift'){
+          this.cursorType = 'shift-cursor'
+        }else if((this.mode === 'create') || (this.mode === 'vertexDrag')){
+          this.cursorType = 'draw-cursor'
+        }else{
+          this.cursorType = 'normal-cursor'
+        }
+      },
     },
     computed:{
-      cursorType(){ //鼠标类型的class，见css
-        if(this.mode === 'shift'){
-          return 'shift-cursor'
-        }else if((this.mode === 'create') || (this.mode === 'vertexDrag')){
-          return 'draw-cursor'
-        }else{
-          return 'normal-cursor'
-        }
-      }
     }
   };
 </script>
