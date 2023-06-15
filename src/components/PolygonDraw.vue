@@ -1,6 +1,5 @@
 <template>
-  <canvas ref="canvas" :class="(mode=='shift') ? 'shift-cursor':'normal-cursor'"
-    tabindex="0"
+  <canvas ref="canvas" :class="cursorType" tabindex="0"
     @mousemove="handleMouseMove"
     @mouseup="handleMouseUp"
     @mousedown="handleMouseDown"
@@ -10,7 +9,7 @@
   ></canvas>
 </template>
    
-  <script>
+<script>
   import {isExistIntersection, checkPP, pointInCircle, centerPoint} from '../lib/DrawAlgorithm'
 
   // 迭代递归法：深拷贝对象与数组
@@ -36,7 +35,7 @@
     // import FlvCop from "@/viewsCommon/components/FlvCop.vue";
   export default {
     name: "PolygonDraw",
-    emits:['created', 'create-failed', 'changed', 'del', 'selected'],
+    emits:['created', 'create-failed', 'changed', 'del', 'error', 'selected'],
     data() {
       return {
         // ctxSave: "",
@@ -151,7 +150,7 @@
         var h = canvas.height;
         canvas.width = w;
         canvas.height = h;
-        },
+      },
       refresh(){
         this.can.width = this.$refs["canvas"].clientWidth;
         this.can.height = this.$refs["canvas"].clientHeight;
@@ -178,8 +177,6 @@
       },
       initCanvas() {
         this.can = this.$refs["canvas"];
-        // this.can.width = this.$refs["canvasBox"].clientWidth;
-        // this.can.height = this.$refs["canvasBox"].clientHeight;
         this.can.width = this.$refs["canvas"].clientWidth;
         this.can.height = this.$refs["canvas"].clientHeight;
         // console.log(can.width, can.height);
@@ -188,18 +185,6 @@
         this.ctx.fillStyle = "rgba(64, 158, 255,0.1)"; //填充颜色
         this.ctx.lineWidth = 4; //线条粗细
         this.ctx.globalAlpha = 0.7; //半透明
-   
-        // this.canSave = this.$refs["Canvas"];
-        // this.canSave.width = this.$refs["canvasBox"].clientWidth;
-        // this.canSave.height = this.$refs["canvasBox"].clientHeight;
-        // this.ctxSave = this.canSave.getContext("2d");
-        // this.ctxSave.strokeStyle = this.lineColor; //线条颜色
-        // this.ctxSave.fillStyle = "rgba(64, 158, 255,0.1)"; //填充颜色
-        // this.ctxSave.lineWidth = 4; //线条粗细
-        // this.ctxSave.globalAlpha = 0.7; //半透明
-
-        // console.log(can);
-        // console.log(canSave);
       },
       select(area){        
         if(area != this.selectedArea){
@@ -316,7 +301,6 @@
               this.shiftArea = this.areas[i]
               this.shiftBeginPoints = deepClone(this.areas[i].points) //复制本区域的点到shiftBeginPoints
               this.dragBeginMousePoint = p
-              
               got = true
             }
             
@@ -417,8 +401,19 @@
         }
       },  
     },
+    computed:{
+      cursorType(){ //鼠标类型的class，见css
+        if(this.mode === 'shift'){
+          return 'shift-cursor'
+        }else if((this.mode === 'create') || (this.mode === 'vertexDrag')){
+          return 'draw-cursor'
+        }else{
+          return 'normal-cursor'
+        }
+      }
+    }
   };
-  </script>
+</script>
    
 <style scoped>
   
@@ -428,6 +423,10 @@
 
  .normal-cursor{
   cursor: default;
+ }
+
+ .draw-cursor{
+  cursor: crosshair;
  }
 
   </style>
