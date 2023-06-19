@@ -1,11 +1,13 @@
 {
   "name": "polygon-draw",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "main": "lib/polygon-draw.umd.min.js",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "lib": "vue-cli-service build --target lib --name polygon-draw --dest lib src/index.js"
   },
   "dependencies": {
     "core-js": "^3.6.5",

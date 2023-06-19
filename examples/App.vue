@@ -7,7 +7,7 @@
 </template>
 <script>
 // import polygonCrop from '../../dist/PolygonCropper.umd';
-import polygonView from './views/PolygonView.vue';
+import polygonView from '@/views/PolygonView.vue';
 
 export default {
   name: 'App',

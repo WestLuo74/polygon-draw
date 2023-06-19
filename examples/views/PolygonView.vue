@@ -44,7 +44,7 @@
 </template>
    
 <script>
-import PolygonDraw from "../components/PolygonDraw.vue";
+import PolygonDraw from "~/components/PolygonDraw.vue";
   
 export default {
   name: "PolygonView",
