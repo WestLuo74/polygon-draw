@@ -1,4 +1,5 @@
 # polygon-draw
+polygon-draw is a polygon draw component for VUE.
 
 ## Project setup
 ```
