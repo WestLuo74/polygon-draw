@@ -1,4 +1,4 @@
-import {PolygonDraw} from "./components/PolygonDraw.vue";
+import PolygonDraw from "./components/PolygonDraw.vue";
 
 PolygonDraw.install = Vue => {
     Vue.component(PolygonDraw.name, PolygonDraw)

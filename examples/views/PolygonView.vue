@@ -31,14 +31,14 @@
     </div>
 
     <div class="dialog-footer" style="margin-top: 10px; position: absolute; left: 0; bottom: 0;">
-      <el-button plain @click="drawArea()">绘制区域</el-button>
-      <el-button plain @click="cancelDraw()">取消绘制</el-button>      
+      <button type="button" @click="drawArea()">绘制区域</button>
+      <button type="button" @click="cancelDraw()">取消绘制</button>
     </div>
 
     <!-- <div v-if="alertType" :class="alertType" class="alert alert-box" role="alert">{{ alertMsg }}</div> -->
-    <el-dialog v-if="alertType" :visible="true">
-      <el-alert title="" center :type="alertType" show-icon> {{ alertMsg }} </el-alert>
-    </el-dialog>
+    <div class="alert-box"  v-if="alertType">
+      <span> {{ alertMsg }} </span>
+    </div>
 
   </div>
 </template>
@@ -189,6 +189,19 @@ export default {
   /* width: 100%;
    height: 100%; */
   z-index: 10;
+}
+
+.alert-box {
+	width: 50%;
+	min-height: 50px;
+	background-color:beige;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 100;
+
+  text-align:center;
 }
 </style>
   
