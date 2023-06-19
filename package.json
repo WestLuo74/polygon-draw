@@ -1,6 +1,6 @@
 {
   "name": "polygon-draw",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "main": "lib/polygon-draw.umd.min.js",
   "scripts": {

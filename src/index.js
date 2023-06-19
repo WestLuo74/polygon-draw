@@ -1,5 +1,9 @@
 import {PolygonDraw} from "./components/PolygonDraw.vue";
 
+PolygonDraw.install = Vue => {
+    Vue.component(PolygonDraw.name, PolygonDraw)
+}
+
 const components = [PolygonDraw];
  
 const install = function (Vue) {
